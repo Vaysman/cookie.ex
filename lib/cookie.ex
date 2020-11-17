@@ -1,5 +1,4 @@
 defmodule Cookie do
-
   @doc """
   Parse cookies as given in a `cookie` header.
 
@@ -49,41 +48,52 @@ defmodule Cookie do
 
   defp do_decode([], acc),
     do: acc
-  defp do_decode([h|t], acc) do
+
+  defp do_decode([h | t], acc) do
     case decode_kv(h) do
       {k, v} -> do_decode(t, Map.put(acc, k, v))
-      false  -> do_decode(t, acc)
+      false -> do_decode(t, acc)
     end
   end
 
   defp decode_kv(""),
     do: false
-  defp decode_kv(<< ?$, _ :: binary >>),
+
+  defp decode_kv(<<?$, _::binary>>),
     do: false
-  defp decode_kv(<< h, t :: binary >>) when h in [?\s, ?\t],
+
+  defp decode_kv(<<h, t::binary>>) when h in [?\s, ?\t],
     do: decode_kv(t)
+
   defp decode_kv(kv),
     do: decode_key(kv, "")
 
   defp decode_key("", _key),
     do: false
-  defp decode_key(<< ?=, _ :: binary >>, ""),
+
+  defp decode_key(<<?=, _::binary>>, ""),
     do: false
-  defp decode_key(<< ?=, t :: binary >>, key),
+
+  defp decode_key(<<?=, t::binary>>, key),
     do: decode_value(t, "", key, "")
-  defp decode_key(<< h, _ :: binary >>, _key) when h in [?\s, ?\t, ?\r, ?\n, ?\v, ?\f],
+
+  defp decode_key(<<h, _::binary>>, _key) when h in [?\s, ?\t, ?\r, ?\n, ?\v, ?\f],
     do: false
-  defp decode_key(<< h, t :: binary >>, key),
-    do: decode_key(t, << key :: binary, h >>)
+
+  defp decode_key(<<h, t::binary>>, key),
+    do: decode_key(t, <<key::binary, h>>)
 
   defp decode_value("", _spaces, key, value),
     do: {key, value}
-  defp decode_value(<< ?\s, t :: binary >>, spaces, key, value),
-    do: decode_value(t, << spaces :: binary, ?\s >>, key, value)
-  defp decode_value(<< h, _ :: binary >>, _spaces, _key, _value) when h in [?\t, ?\r, ?\n, ?\v, ?\f],
+
+  defp decode_value(<<?\s, t::binary>>, spaces, key, value),
+    do: decode_value(t, <<spaces::binary, ?\s>>, key, value)
+
+  defp decode_value(<<h, _::binary>>, _spaces, _key, _value) when h in [?\t, ?\r, ?\n, ?\v, ?\f],
     do: false
-  defp decode_value(<< h, t :: binary >>, spaces, key, value),
-    do: decode_value(t, "", key, << value :: binary, spaces :: binary , h >>)
+
+  defp decode_value(<<h, t::binary>>, spaces, key, value),
+    do: decode_value(t, "", key, <<value::binary, spaces::binary, h>>)
 
   @doc """
   Serialize cookies to format for `cookie` header.
@@ -108,6 +118,7 @@ defmodule Cookie do
   def serialize({key, value}) do
     "#{key}=#{value}"
   end
+
   def serialize(cookies) do
     cookies
     |> Enum.map(&serialize/1)

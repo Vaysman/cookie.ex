@@ -139,7 +139,7 @@ defmodule SetCookie do
   def serialize(key, value, opts \\ []) do
     opts = Enum.into(opts, %{})
 
-    path   = Map.get(opts, :path, "/")
+    path = Map.get(opts, :path, "/")
 
     "#{key}=#{value}; path=#{path}"
     |> concat_if(opts[:domain], &"; domain=#{&1}")
@@ -150,7 +150,7 @@ defmodule SetCookie do
   end
 
   defp encode_max_age(max_age, opts) do
-    time = Map.get(opts, :universal_time) || :calendar.universal_time
+    time = Map.get(opts, :universal_time) || :calendar.universal_time()
     time = add_seconds(time, max_age)
     "; expires=" <> rfc2822(time) <> "; max-age=" <> Integer.to_string(max_age)
   end
@@ -159,8 +159,10 @@ defmodule SetCookie do
     cond do
       !value ->
         acc
+
       is_function(fun_or_string) ->
         acc <> fun_or_string.(value)
+
       is_binary(fun_or_string) ->
         acc <> fun_or_string
     end
@@ -170,17 +172,25 @@ defmodule SetCookie do
   defp pad(number), do: Integer.to_string(number)
 
   defp rfc2822({{year, month, day} = date, {hour, minute, second}}) do
-    weekday_name  = weekday_name(:calendar.day_of_the_week(date))
-    month_name    = month_name(month)
-    padded_day    = pad(day)
-    padded_hour   = pad(hour)
+    weekday_name = weekday_name(:calendar.day_of_the_week(date))
+    month_name = month_name(month)
+    padded_day = pad(day)
+    padded_hour = pad(hour)
     padded_minute = pad(minute)
     padded_second = pad(second)
-    binary_year   = Integer.to_string(year)
+    binary_year = Integer.to_string(year)
 
-    weekday_name <> ", " <> padded_day <>
-      " " <> month_name <> " " <> binary_year <>
-      " " <> padded_hour <> ":" <> padded_minute <>
+    weekday_name <>
+      ", " <>
+      padded_day <>
+      " " <>
+      month_name <>
+      " " <>
+      binary_year <>
+      " " <>
+      padded_hour <>
+      ":" <>
+      padded_minute <>
       ":" <> padded_second <> " GMT"
   end
 
@@ -192,15 +202,15 @@ defmodule SetCookie do
   defp weekday_name(6), do: "Sat"
   defp weekday_name(7), do: "Sun"
 
-  defp month_name(1),  do: "Jan"
-  defp month_name(2),  do: "Feb"
-  defp month_name(3),  do: "Mar"
-  defp month_name(4),  do: "Apr"
-  defp month_name(5),  do: "May"
-  defp month_name(6),  do: "Jun"
-  defp month_name(7),  do: "Jul"
-  defp month_name(8),  do: "Aug"
-  defp month_name(9),  do: "Sep"
+  defp month_name(1), do: "Jan"
+  defp month_name(2), do: "Feb"
+  defp month_name(3), do: "Mar"
+  defp month_name(4), do: "Apr"
+  defp month_name(5), do: "May"
+  defp month_name(6), do: "Jun"
+  defp month_name(7), do: "Jul"
+  defp month_name(8), do: "Aug"
+  defp month_name(9), do: "Sep"
   defp month_name(10), do: "Oct"
   defp month_name(11), do: "Nov"
   defp month_name(12), do: "Dec"
