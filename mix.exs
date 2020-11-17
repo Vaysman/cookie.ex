@@ -3,6 +3,18 @@ defmodule Cookie.Mixfile do
 
   def project do
     [
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ],
+      dialyzer: [
+        ignore_warnings: ".dialyzer_ignore.exs",
+        list_unused_filters: true,
+        plt_file: {:no_warn, "cookie.plt"}
+      ],
       app: :cookie,
       version: "0.2.0",
       elixir: "~> 1.9",
@@ -21,7 +33,12 @@ defmodule Cookie.Mixfile do
 
   defp deps do
     [
-      {:ex_doc, ">= 0.0.0", only: :dev}
+      {:git_hooks, "~> 0.5.1", only: :dev, runtime: false},
+      {:excoveralls, "~> 0.13.3", only: :test},
+      {:credo, "~> 1.5.1", only: :dev, runtime: false},
+      {:mix_test_watch, "~> 1.0.2", only: :dev, runtime: false},
+      {:dialyxir, "~> 1.0.0", only: :dev, runtime: false},
+      {:ex_doc, "~> 0.23.0", only: :dev}
     ]
   end
 
