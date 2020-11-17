@@ -1,4 +1,17 @@
 defmodule SetCookie do
+  @moduledoc """
+  Parse and serialize cookies as given in a set-cookie header.
+  """
+
+  @type cookie :: %{key: String.t(), value: String.t(), attributes: map()}
+  @type cookie_attribute ::
+          {:domain, String.t()}
+          | {:path, String.t()}
+          | {:http_only, true}
+          | {:secure, true}
+          | {:max_age, String.t()}
+          | {:expires, String.t()}
+          | {:extra, String.t()}
   @doc """
   Parse a `set-cookie` header, into key, value and attributes.
 
@@ -40,6 +53,7 @@ defmodule SetCookie do
       %{expires: "Thu, 01 Jan 1970 00:00:00 GMT"}
 
   """
+  @spec parse(String.t()) :: cookie()
   def parse(set_cookie_string) do
     [content | attributes] = String.split(set_cookie_string, ~r/;\s*/)
     [key, value] = String.split(content, "=", parts: 2)
@@ -47,6 +61,7 @@ defmodule SetCookie do
     %{key: key, value: value, attributes: attributes}
   end
 
+  @spec parse_attribute(String.t()) :: cookie_attribute()
   defp parse_attribute("domain=" <> domain), do: {:domain, domain}
   defp parse_attribute("path=" <> path), do: {:path, path}
   defp parse_attribute("HttpOnly"), do: {:http_only, true}
@@ -73,6 +88,7 @@ defmodule SetCookie do
       "foo=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; max-age=0; secure"
 
   """
+  @spec expire(String.t(), list()) :: String.t()
   def expire(key, opts \\ []) do
     opts = Enum.into(opts, %{})
     opts = Map.merge(opts, %{max_age: 0, universal_time: @epoch})
@@ -136,6 +152,7 @@ defmodule SetCookie do
       "foo=bar; path=/; HttpOnly; SameSite=Lax"
 
   """
+  @spec serialize(String.t(), String.t(), list() | map()) :: String.t()
   def serialize(key, value, opts \\ []) do
     opts = Enum.into(opts, %{})
 
@@ -149,12 +166,14 @@ defmodule SetCookie do
     |> concat_if(opts[:extra], &"; #{&1}")
   end
 
+  @spec encode_max_age(non_neg_integer(), map()) :: String.t()
   defp encode_max_age(max_age, opts) do
     time = Map.get(opts, :universal_time) || :calendar.universal_time()
     time = add_seconds(time, max_age)
     "; expires=" <> rfc2822(time) <> "; max-age=" <> Integer.to_string(max_age)
   end
 
+  @spec concat_if(String.t(), nil | String.t(), (any() -> String.t()) | String.t()) :: String.t()
   defp concat_if(acc, value, fun_or_string) do
     cond do
       !value ->
@@ -168,9 +187,11 @@ defmodule SetCookie do
     end
   end
 
+  @spec pad(non_neg_integer() | String.t()) :: String.t()
   defp pad(number) when number in 0..9, do: <<?0, ?0 + number>>
   defp pad(number), do: Integer.to_string(number)
 
+  @spec rfc2822(:calendar.datetime()) :: String.t()
   defp rfc2822({{year, month, day} = date, {hour, minute, second}}) do
     weekday_name = weekday_name(:calendar.day_of_the_week(date))
     month_name = month_name(month)
@@ -194,6 +215,7 @@ defmodule SetCookie do
       ":" <> padded_second <> " GMT"
   end
 
+  @spec weekday_name(pos_integer()) :: String.t()
   defp weekday_name(1), do: "Mon"
   defp weekday_name(2), do: "Tue"
   defp weekday_name(3), do: "Wed"
@@ -202,6 +224,7 @@ defmodule SetCookie do
   defp weekday_name(6), do: "Sat"
   defp weekday_name(7), do: "Sun"
 
+  @spec month_name(pos_integer()) :: String.t()
   defp month_name(1), do: "Jan"
   defp month_name(2), do: "Feb"
   defp month_name(3), do: "Mar"
@@ -215,6 +238,7 @@ defmodule SetCookie do
   defp month_name(11), do: "Nov"
   defp month_name(12), do: "Dec"
 
+  @spec add_seconds(:calendar.datetime(), non_neg_integer()) :: :calendar.datetime()
   defp add_seconds(time, seconds_to_add) do
     time_seconds = :calendar.datetime_to_gregorian_seconds(time)
     :calendar.gregorian_seconds_to_datetime(time_seconds + seconds_to_add)

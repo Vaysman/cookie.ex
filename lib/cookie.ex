@@ -1,4 +1,10 @@
 defmodule Cookie do
+  @moduledoc """
+  Parse and serialize cookies as given in a cookie header.
+  """
+
+  @type key_value :: {String.t(), String.t()}
+
   @doc """
   Parse cookies as given in a `cookie` header.
 
@@ -46,6 +52,7 @@ defmodule Cookie do
     do_decode(:binary.split(string, [";", ","], [:global]), %{})
   end
 
+  @spec do_decode(list(key_value()), map()) :: map()
   defp do_decode([], acc),
     do: acc
 
@@ -56,6 +63,7 @@ defmodule Cookie do
     end
   end
 
+  @spec decode_kv(String.t()) :: {String.t(), String.t()} | false
   defp decode_kv(""),
     do: false
 
@@ -68,6 +76,7 @@ defmodule Cookie do
   defp decode_kv(kv),
     do: decode_key(kv, "")
 
+  @spec decode_key(String.t(), String.t()) :: {String.t(), String.t()} | false
   defp decode_key("", _key),
     do: false
 
@@ -83,6 +92,8 @@ defmodule Cookie do
   defp decode_key(<<h, t::binary>>, key),
     do: decode_key(t, <<key::binary, h>>)
 
+  @spec decode_value(String.t(), String.t(), String.t(), String.t()) ::
+          {String.t(), String.t()} | false
   defp decode_value("", _spaces, key, value),
     do: {key, value}
 
@@ -115,10 +126,12 @@ defmodule Cookie do
   Be nice to property test serialize and parse.
   """
   # TODO handle invalid keys, ie with equals or $
+  @spec serialize(key_value()) :: String.t()
   def serialize({key, value}) do
     "#{key}=#{value}"
   end
 
+  @spec serialize(list(key_value())) :: String.t()
   def serialize(cookies) do
     cookies
     |> Enum.map(&serialize/1)
