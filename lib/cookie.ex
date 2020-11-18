@@ -123,12 +123,33 @@ defmodule Cookie do
       iex> serialize(%{"key1" => "value1", "key2" => "value2"})
       "key1=value1; key2=value2"
 
+      # Invalid cookies are dropped
+      iex> serialize({"$key1", "value1"})
+      ""
+
+      iex> serialize({"", "value1"})
+      ""
+
+      iex> serialize({"key=", "value1"})
+      ""
+
   Be nice to property test serialize and parse.
   """
-  # TODO handle invalid keys, ie with equals or $
   @spec serialize(key_value()) :: String.t()
+  def serialize({<<?$, _::binary>>, _}) do
+    ""
+  end
+
+  def serialize({"", _}) do
+    ""
+  end
+
   def serialize({key, value}) do
-    "#{key}=#{value}"
+    if String.match?(key, ~r/=/) do
+      ""
+    else
+      "#{key}=#{value}"
+    end
   end
 
   @spec serialize(list(key_value())) :: String.t()
