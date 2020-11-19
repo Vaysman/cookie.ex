@@ -152,7 +152,7 @@ defmodule Cookie do
     end
   end
 
-  @spec serialize(list(key_value())) :: String.t()
+  @spec serialize(list(key_value()) | %{String.t() => String.t()}) :: String.t()
   def serialize(cookies) do
     cookies
     |> Enum.map(&serialize/1)
